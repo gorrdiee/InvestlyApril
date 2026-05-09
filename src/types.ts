@@ -59,3 +59,33 @@ export interface TriggerEvent {
 export interface JournalNote {
   id: string; timestamp: number; note: string; tags: string[]
 }
+
+// --- New Feature Types ---
+export interface SensorySignature {
+  emotionId: number; heartRate: number; hrv: number; temperature: number; gsr: number; accelerometer: number
+}
+export interface InterventionLog {
+  id: string; timestamp: number; type: 'breathing'|'playlist'|'vibration'|'animation';
+  triggeredBy: number; // emotionId threshold
+  completed: boolean; stressBefore: number; stressAfter?: number; effective: boolean
+}
+export interface EnvironmentScan {
+  id: string; timestamp: number; name: string; visualNoise: number; lighting: number; crowdDensity: number;
+  sensoryLoadScore: number; comfortPrediction: number; location: {lat:number;lng:number}
+}
+export interface MedicationRecord {
+  id: string; name: string; dosage: string; frequency: string; startDate: string; endDate?: string;
+  logs: {date:string;taken:boolean;note?:string}[]
+}
+export interface TherapySession {
+  id: string; date: string; type: string; provider: string; notes: string; effectiveness: 1|2|3|4|5
+}
+export interface CommunityInsight {
+  id: string; title: string; description: string; category: string; matchPercentage: number
+}
+export interface WellnessMilestone {
+  id: string; title: string; description: string; icon: string; unlockedAt?: number; progress: number
+}
+export interface DayPrediction {
+  hour: number; stressPrediction: number; emotionId: number; recommendation: string
+}

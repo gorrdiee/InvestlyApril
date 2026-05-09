@@ -1,18 +1,23 @@
 import { useCtx } from '../App'
 import { EMOTIONS } from '../constants'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const QUICK_ACTIONS = [
   { icon: '🆘', label: 'SOS' }, { icon: '📍', label: 'Pause GPS' },
-  { icon: '💡', label: 'Badge Mode' }, { icon: '📝', label: 'Add Note' },
+  { icon: '🧘', label: 'Interventions', link: '/interventions' },
+  { icon: '🧬', label: 'Sensory Profile', link: '/sensory-profile' },
+  { icon: '💊', label: 'Medications', link: '/medications' },
+  { icon: '🧠', label: 'Day Planner' },
 ]
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const ctx = useCtx()
   const pd = ctx.physData
   const h = ctx.emotion
-  const [noteText, setNoteText] = useState('')
   const [showSos, setShowSos] = useState(false)
+  const [showPlanner, setShowPlanner] = useState(false)
 
   const ringColor = h.color
   const sparklineData = ctx.events.slice(0, 30).reverse()
@@ -28,9 +33,13 @@ export default function Dashboard() {
       <h1 className="page-title">AuraLink</h1>
 
       {/* Quick Actions */}
-      <div className="quick-actions">
-        {QUICK_ACTIONS.map((qa, i) => (
-          <button key={i} className="qa-btn" onClick={() => { if (i === 0) setShowSos(true) }}>
+      <div className="quick-actions" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        {QUICK_ACTIONS.map((qa: any, i) => (
+          <button key={i} className="qa-btn" onClick={() => {
+            if (i === 0) setShowSos(true)
+            else if (qa.link) navigate(qa.link)
+            else if (i === 5) setShowPlanner(!showPlanner)
+          }}>
             <span className="qa-icon">{qa.icon}</span>
             <span>{qa.label}</span>
           </button>
@@ -141,6 +150,41 @@ export default function Dashboard() {
               : 'Mild unease detected in the last hour. A short walk might help.'}
         </div>
       </div>
+
+      {/* Predictive Day Planner */}
+      {showPlanner && (
+        <div className="glass" style={{ borderColor: 'rgba(168,85,247,0.3)' }}>
+          <div className="glass-title">📅 Predictive Day Planner</div>
+          <div className="ai-insight" style={{ marginBottom: 8 }}>
+            <div className="head"><span>🤖 Today's Forecast</span></div>
+            <div className="text">
+              {new Date().toLocaleDateString('en', { weekday: 'long' })}. Historically, stress peaks around 10-11 AM.
+              Recommended: prepare calming strategies before morning activities.
+            </div>
+          </div>
+          <div className="timeline-bar" style={{ height: 24 }}>
+            {Array.from({ length: 12 }, (_, i) => {
+              const hour = i + 7
+              const risk = hour >= 9 && hour <= 11 ? 80 : hour >= 14 && hour <= 16 ? 60 : 20
+              return (
+                <div key={i} className="timeline-seg" style={{
+                  background: risk > 70 ? '#ef4444' : risk > 40 ? '#f59e0b' : '#00d4ff',
+                  opacity: 0.7,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: 8, color: '#fff', fontWeight: 600 }}>{hour}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="timeline-labels"><span>7 AM</span><span>12 PM</span><span>6 PM</span></div>
+          <div className="mt-2" style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            🔴 10-11 AM: High stress predicted — take a 5-min break beforehand<br />
+            🟡 2-4 PM: Moderate risk — keep noise-cancelling headphones ready<br />
+            🔵 Morning/Evening: Low stress — good time for focus activities
+          </div>
+        </div>
+      )}
 
       {/* Recent Events */}
       <div className="glass">

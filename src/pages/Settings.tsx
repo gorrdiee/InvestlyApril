@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useCtx } from '../App'
 import { EMOTIONS, ACCENT_COLORS } from '../constants'
-import type { BadgeSettings } from '../types'
+import { scanBLEDevices, connectBLEDevice } from '../firebase'
+import type { BadgeSettings, BLEDevice } from '../types'
 
 type Tab = 'device' | 'badge' | 'notifications' | 'profile'
 
@@ -58,6 +59,33 @@ export default function Settings() {
                 <span className="text-sm" style={{ color: 'var(--neon-mint)' }}>● Connected</span>
               </div>
             </div>
+          </div>
+
+          {/* Real BLE Scan */}
+          <div className="glass" style={{ borderColor: 'rgba(0,212,255,0.2)' }}>
+            <div className="glass-title">📡 Discover Real Devices</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+              Use Bluetooth to scan for nearby AuraLink devices.
+            </p>
+            <button className="neon-btn primary" onClick={async () => {
+              try {
+                const devices = await scanBLEDevices()
+                if (devices.length > 0) {
+                  await connectBLEDevice(devices[0].id)
+                  alert(`Connected to ${devices[0].name}`)
+                }
+              } catch (err: any) {
+                if (err.message?.includes('not supported')) {
+                  alert('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.')
+                } else if (err.message?.includes('cancelled') || err.message?.includes('cancel')) {
+                  // user cancelled
+                } else {
+                  alert('Scan failed: ' + err.message)
+                }
+              }
+            }}>
+              📱 Scan for Devices
+            </button>
           </div>
 
           {/* AI Calibration */}
@@ -353,6 +381,47 @@ export default function Settings() {
                 <div className="desc">AES-256 — Active</div>
               </div>
               <span style={{ color: 'var(--neon-mint)', fontSize: 12 }}>✅ Secure</span>
+            </div>
+          </div>
+
+          {/* Wellness Streaks & Milestones */}
+          <div className="glass" style={{ borderColor: 'rgba(0,255,179,0.2)' }}>
+            <div className="glass-title">🏅 Wellness Streaks & Milestones</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+              {[
+                { icon: '🔥', label: 'Day Streak', value: '7', color: 'var(--neon-amber)' },
+                { icon: '🧘', label: 'Calm Hours', value: '3.2', color: 'var(--neon-mint)' },
+                { icon: '🏆', label: 'Crisis-Free', value: '12', color: 'var(--neon-blue)' },
+              ].map((stat, i) => (
+                <div key={i} style={{ textAlign: 'center', padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+                  <div style={{ fontSize: 24, marginBottom: 4 }}>{stat.icon}</div>
+                  <div className="text-mono" style={{ fontSize: 22, color: stat.color }}>{stat.value}</div>
+                  <div className="text-sm text-muted">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="glass-title" style={{ marginTop: 8 }}>💎 Gallery of Calm</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { icon: '💎', label: '7 Days Calm', unlocked: true, color: 'var(--neon-blue)' },
+                { icon: '🔮', label: 'First Week', unlocked: true, color: 'var(--neon-purple)' },
+                { icon: '⭐', label: '3h Calm Streak', unlocked: true, color: 'var(--neon-amber)' },
+                { icon: '🌙', label: 'Quiet Place', unlocked: false, color: 'var(--text-muted)' },
+                { icon: '💫', label: '30 Days', unlocked: false, color: 'var(--text-muted)' },
+                { icon: '🌈', label: 'Resilience', unlocked: false, color: 'var(--text-muted)' },
+                { icon: '🌊', label: 'Calm Master', unlocked: false, color: 'var(--text-muted)' },
+                { icon: '🌟', label: 'Sensory Aware', unlocked: false, color: 'var(--text-muted)' },
+              ].map((m, i) => (
+                <div key={i} style={{
+                  textAlign: 'center', padding: '10px 8px', width: '23%',
+                  background: m.unlocked ? `${m.color}10` : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${m.unlocked ? `${m.color}30` : 'rgba(255,255,255,0.05)'}`,
+                  borderRadius: 8, opacity: m.unlocked ? 1 : 0.4,
+                }}>
+                  <div style={{ fontSize: 20, marginBottom: 2, filter: m.unlocked ? 'none' : 'grayscale(1)' }}>{m.icon}</div>
+                  <div style={{ fontSize: 9, color: m.unlocked ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: 1.2 }}>{m.label}</div>
+                </div>
+              ))}
             </div>
           </div>
 

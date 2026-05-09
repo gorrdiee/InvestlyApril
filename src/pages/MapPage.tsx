@@ -3,7 +3,7 @@ import { useCtx } from '../App'
 import { genRouteHistory, genHeatmapData } from '../data'
 import { EMOTIONS } from '../constants'
 
-type Tab = 'map' | 'zones' | 'routes'
+type Tab = 'map' | 'zones' | 'routes' | 'scanner'
 
 export default function MapPage() {
   const ctx = useCtx()
@@ -66,10 +66,10 @@ export default function MapPage() {
       <h1 className="page-title">Map & Geofencing</h1>
 
       {/* Sub tabs */}
-      <div className="tab-bar">
-        {(['map', 'zones', 'routes'] as const).map(t => (
+      <div className="tab-bar" style={{ flexWrap: 'wrap' }}>
+        {(['map', 'zones', 'routes', 'scanner'] as const).map(t => (
           <button key={t} className={`tab-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'map' ? '🗺️ Map' : t === 'zones' ? '📍 Zones' : '🛤️ Routes'}
+            {t === 'map' ? '🗺️ Map' : t === 'zones' ? '📍 Zones' : t === 'routes' ? '🛤️ Routes' : '📷 Scanner'}
           </button>
         ))}
       </div>
@@ -230,6 +230,80 @@ export default function MapPage() {
                 </div>
               )
             })}
+          </div>
+        </>
+      )}
+
+      {tab === 'scanner' && (
+        <>
+          <div className="glass" style={{ textAlign: 'center', padding: 24 }}>
+            <div className="glass-title">📷 Environment Scanner</div>
+            <div style={{ fontSize: 64, marginBottom: 12 }}>📸</div>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Point your camera at a new environment to assess sensory load before entering.
+            </p>
+            <div className="map-container" style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="map-grid" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, marginBottom: 8 }}>📷</div>
+                  <div className="text-sm text-muted">Camera viewfinder</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sample Scan Result */}
+          <div className="glass" style={{ borderColor: 'rgba(0,212,255,0.2)' }}>
+            <div className="glass-title">Last Scan — Coffee Shop</div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm">Sensory Load Score</span>
+              <div className="progress-ring" style={{ width: 56, height: 56 }}>
+                <svg viewBox="0 0 36 36">
+                  <path className="progress-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="progress-ring-fg" stroke={6 > 5 ? 'var(--neon-amber)' : 'var(--neon-mint)'}
+                    strokeDasharray={`${(6 / 10) * 100}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div className="center" style={{ fontSize: 16, color: 6 > 5 ? 'var(--neon-amber)' : 'var(--neon-mint)' }}>6</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+              {[
+                { label: 'Visual Noise', value: 7, color: 'var(--neon-amber)' },
+                { label: 'Lighting', value: 4, color: 'var(--neon-mint)' },
+                { label: 'Crowd Density', value: 8, color: 'var(--neon-red)' },
+              ].map((item, i) => (
+                <div key={i} style={{ textAlign: 'center', padding: 8, background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+                  <div className="text-sm text-muted">{item.label}</div>
+                  <div className="text-mono" style={{ fontSize: 20, color: item.color }}>{item.value}/10</div>
+                </div>
+              ))}
+            </div>
+            <div className="ai-insight" style={{ margin: 0 }}>
+              <div className="head"><span>🤖 Comfort Prediction</span></div>
+              <div className="text">Based on your profile, comfort probability in this environment is <strong style={{ color: 'var(--neon-amber)' }}>42%</strong>. Similar environments (cafés) have historically triggered mild unease. Consider visiting during off-peak hours.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+              <span className="text-sm text-muted">🚶 5 min walk · 📍 200m away</span>
+            </div>
+          </div>
+
+          {/* Scan History */}
+          <div className="glass">
+            <div className="glass-title">Recent Scans</div>
+            {[
+              { name: 'Supermarket', score: 8, comfort: 25, time: 'Yesterday' },
+              { name: 'Library', score: 2, comfort: 91, time: '2 days ago' },
+              { name: 'Park Bench', score: 3, comfort: 88, time: '3 days ago' },
+            ].map((scan, i) => (
+              <div key={i} className="event-item" style={{ borderLeftColor: scan.score > 7 ? 'var(--neon-red)' : scan.score > 4 ? 'var(--neon-amber)' : 'var(--neon-mint)' }}>
+                <div className="dot" style={{ background: scan.score > 7 ? 'var(--neon-red)' : scan.score > 4 ? 'var(--neon-amber)' : 'var(--neon-mint)' }} />
+                <div className="info">
+                  <div className="state">{scan.name}</div>
+                  <div className="meta">Load: {scan.score}/10 · Comfort: {scan.comfort}%</div>
+                </div>
+                <div className="time">{scan.time}</div>
+              </div>
+            ))}
           </div>
         </>
       )}

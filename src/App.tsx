@@ -9,6 +9,10 @@ import Observers from './pages/Observers'
 import AIAssistant from './pages/AIAssistant'
 import Settings from './pages/Settings'
 import AuthFlow from './pages/AuthFlow'
+import SensoryProfile from './pages/SensoryProfile'
+import Interventions from './pages/Interventions'
+import Medications from './pages/Medications'
+import { initFirebase, onAuthChange, logoutUser, saveUserSettings } from './firebase'
 import type { EmotionResult, PhysData, EventLog, NotificationRec, BadgeSettings, AppSettings, Observer, GeoZone, ChatMessage, AISuggestion, JournalNote } from './types'
 
 export interface AppCtx {
@@ -83,6 +87,23 @@ export default function App() {
   useEffect(() => { persist('au_zones', geoZones) }, [geoZones])
   useEffect(() => { persist('au_settings', settings) }, [settings])
 
+  // Init Firebase
+  useEffect(() => { try { initFirebase() } catch {} }, [])
+
+  // Firebase auth state listener
+  useEffect(() => {
+    try {
+      const unsub = onAuthChange((firebaseUser) => {
+        if (firebaseUser) {
+          setUser({ name: firebaseUser.displayName || 'User', email: firebaseUser.email || '', type: 'asd_user' })
+        } else if (!load('au_user', null)) {
+          // Only clear if we don't have a local user (for the demo flow)
+        }
+      })
+      return unsub
+    } catch { return }
+  }, [])
+
   // Accent color CSS variable
   useEffect(() => { document.documentElement.style.setProperty('--accent', settings.accentColor) }, [settings.accentColor])
 
@@ -94,6 +115,7 @@ export default function App() {
   const handleLogout = useCallback(() => {
     setUser(null)
     localStorage.removeItem('au_user')
+    try { logoutUser() } catch {}
   }, [])
 
   // Simulation loop (only when logged in)
@@ -173,6 +195,9 @@ export default function App() {
           <Route path="/observers" element={<Observers />} />
           <Route path="/ai" element={<AIAssistant />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/sensory-profile" element={<SensoryProfile />} />
+          <Route path="/interventions" element={<Interventions />} />
+          <Route path="/medications" element={<Medications />} />
         </Routes>
         <nav className="bottom-nav">
           {NAV.map(item => (

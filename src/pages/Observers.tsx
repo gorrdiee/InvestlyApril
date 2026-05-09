@@ -122,6 +122,49 @@ export default function Observers() {
               <div className="toggle on"><div className="knob" /></div>
             </div>
           </div>
+
+          {/* Caregiver Sync Mode */}
+          <div className="glass" style={{ borderColor: 'rgba(168,85,247,0.3)' }}>
+            <div className="glass-title">🔁 Caregiver Sync Mode</div>
+            <div className="flex items-center gap-3 mb-3" style={{ padding: 16, background: 'rgba(168,85,247,0.05)', borderRadius: 8 }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: '50%',
+                boxShadow: `0 0 20px ${ctx.emotion.color}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
+                background: `${ctx.emotion.color}20`,
+                border: `2px solid ${ctx.emotion.color}`,
+                transition: 'all .5s',
+              }}>
+                {ctx.user?.name?.[0] || 'U'}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600 }}>Live Aura — {ctx.emotion.stateName}</div>
+                <div className="text-sm text-muted">Observer sees real-time color around user photo</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--neon-mint)', animation: 'pulse-ring 2s infinite' }} />
+                  <span style={{ fontSize: 11, color: 'var(--neon-mint)' }}>Sync Active</span>
+                </div>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div className="left">
+                <div className="label">Haptic Bridge</div>
+                <div className="desc">Silent vibration pattern when user is distressed</div>
+              </div>
+              <div className="toggle on"><div className="knob" /></div>
+            </div>
+            <div className="setting-row" style={{ borderBottom: 'none' }}>
+              <div className="left">
+                <div className="label">Vibration Pattern</div>
+                <div className="desc">Short pulse · Long pulse · Rapid pulse</div>
+              </div>
+              <select className="neon-input" style={{ width: 'auto', padding: '4px 8px', fontSize: 12 }}>
+                <option>Gentle (.. .. ..)</option>
+                <option>Urgent (... ... ...)</option>
+                <option>Rhythmic (.- .- .-)</option>
+              </select>
+            </div>
+          </div>
         </>
       )}
 
