@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+*.apk
+*.aab
+*.ipa
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Firebase config (should not be committed)
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Metro
+.metro-health-check*
+
+# Testing
+coverage/
+.jest/
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary
+tmp/
+temp/
+
+# Patch files
+patches/

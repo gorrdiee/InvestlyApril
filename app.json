@@ -1,0 +1,58 @@
+{
+  "name": "AuraLink",
+  "displayName": "AuraLink",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "icon": "./src/assets/images/app-icon.png",
+  "splash": {
+    "image": "./src/assets/images/splash.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#F8F9FA"
+  },
+  "updates": {
+    "fallbackToCacheTimeout": 0
+  },
+  "assetBundlePatterns": ["**/*"],
+  "ios": {
+    "supportsTablet": true,
+    "bundleIdentifier": "com.auralink.mobile",
+    "buildNumber": "1.0.0",
+    "infoPlist": {
+      "NSBluetoothAlwaysUsageDescription": "AuraLink needs Bluetooth to connect to your wearable neckband device.",
+      "NSBluetoothPeripheralUsageDescription": "AuraLink needs Bluetooth to communicate with your wearable device.",
+      "NSLocationWhenInUseUsageDescription": "AuraLink needs location to scan for nearby BLE devices.",
+      "NSFaceIDUsageDescription": "AuraLink uses Face ID for secure login.",
+      "UIBackgroundModes": ["bluetooth-central", "fetch", "remote-notification"]
+    }
+  },
+  "android": {
+    "package": "com.auralink.mobile",
+    "versionCode": 1,
+    "permissions": [
+      "BLUETOOTH",
+      "BLUETOOTH_ADMIN",
+      "BLUETOOTH_CONNECT",
+      "BLUETOOTH_SCAN",
+      "BLUETOOTH_ADVERTISE",
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION",
+      "CAMERA",
+      "VIBRATE",
+      "RECEIVE_BOOT_COMPLETED",
+      "POST_NOTIFICATIONS"
+    ]
+  },
+  "plugins": [
+    [
+      "react-native-permissions",
+      {
+        "iosPermissions": [
+          "BluetoothPeripheral",
+          "LocationWhenInUse",
+          "Notifications",
+          "FaceID"
+        ]
+      }
+    ]
+  ]
+}
