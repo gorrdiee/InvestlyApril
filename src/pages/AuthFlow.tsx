@@ -15,7 +15,7 @@ interface AuthFlowProps {
 export default function AuthFlow({ onComplete }: AuthFlowProps) {
   const [slide, setSlide] = useState(0)
   const [mode, setMode] = useState<'onboarding' | 'login'>('onboarding')
-  const [isRegister, setIsRegister] = useState(false)
+  const [isRegister, setIsRegister] = useState(true)
   const [userType, setUserType] = useState<'asd_user' | 'observer' | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -38,7 +38,30 @@ export default function AuthFlow({ onComplete }: AuthFlowProps) {
         onComplete(user.displayName || user.email || 'User', user.email || '', 'asd_user')
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed')
+      // Firebase not configured — fall back to demo login
+      if (err.message?.includes('Firebase not configured')) {
+        const displayName = name.trim() || email.split('@')[0] || 'Demo User'
+        onComplete(displayName, email.trim(), userType || 'asd_user')
+        return
+      }
+      // Email already registered — switch to sign-in mode
+      if (err.code === 'auth/email-already-in-use') {
+        setError(`"${email}" is already registered. Sign in below, or use a different email.`)
+        setIsRegister(false)
+        setLoading(false)
+        return
+      }
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please try again.')
+        setLoading(false)
+        return
+      }
+      if (err.code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please wait a moment and try again.')
+        setLoading(false)
+        return
+      }
+      setError(err.message || err.code || 'Authentication failed')
     }
     setLoading(false)
   }
@@ -50,6 +73,11 @@ export default function AuthFlow({ onComplete }: AuthFlowProps) {
       const user = await loginWithGoogle()
       onComplete(user.displayName || 'User', user.email || '', 'asd_user')
     } catch (err: any) {
+      // Firebase not configured — fall back to demo
+      if (err.message?.includes('Firebase not configured')) {
+        onComplete('Demo User', 'demo@gmail.com', 'asd_user')
+        return
+      }
       setError(err.message || 'Google sign-in failed')
     }
     setLoading(false)
@@ -100,9 +128,16 @@ export default function AuthFlow({ onComplete }: AuthFlowProps) {
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, background: 'linear-gradient(135deg, var(--accent), var(--neon-mint))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           AuraLink
         </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>
-          {isRegister ? 'Create your account' : 'Sign in to your account'}
-        </p>
+        <div style={{ display: 'flex', gap: 0, margin: '16px auto 0', maxWidth: 280, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button onClick={() => { setIsRegister(true); setError('') }}
+            style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .2s', background: isRegister ? 'var(--accent)' : 'transparent', color: isRegister ? '#000' : 'var(--text-secondary)' }}>
+            Create Account
+          </button>
+          <button onClick={() => { setIsRegister(false); setError('') }}
+            style={{ flex: 1, padding: '10px 0', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .2s', background: !isRegister ? 'var(--accent)' : 'transparent', color: !isRegister ? '#000' : 'var(--text-secondary)' }}>
+            Sign In
+          </button>
+        </div>
       </div>
 
       {error && (

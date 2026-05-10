@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
-import { Routes, Route, NavLink } from 'react-router-dom'
+import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { EMOTIONS } from './constants'
 import { genPhysData, classify, calcStress, calcWellness, genEvent } from './data'
 import Dashboard from './pages/Dashboard'
@@ -9,6 +9,7 @@ import Observers from './pages/Observers'
 import AIAssistant from './pages/AIAssistant'
 import Settings from './pages/Settings'
 import AuthFlow from './pages/AuthFlow'
+import Landing from './pages/Landing'
 import SensoryProfile from './pages/SensoryProfile'
 import Interventions from './pages/Interventions'
 import Medications from './pages/Medications'
@@ -36,7 +37,7 @@ function load(key: string, def: any) {
 function persist(key: string, val: any) { try { localStorage.setItem(key, JSON.stringify(val)) } catch {} }
 
 const NAV = [
-  { to: '/', icon: '📊', label: 'Dashboard' },
+  { to: '/dashboard', icon: '📊', label: 'Dashboard' },
   { to: '/analytics', icon: '📈', label: 'Analytics' },
   { to: '/map', icon: '🗺️', label: 'Map' },
   { to: '/observers', icon: '👥', label: 'Observers' },
@@ -56,6 +57,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 }
 
 export default function App() {
+  const navigate = useNavigate()
   const [user, setUser] = useState<{ name: string; email: string; type: string } | null>(load('au_user', null))
   const [physData, setPhysData] = useState<PhysData | null>(null)
   const [emotion, setEmotion] = useState<EmotionResult>({ ...EMOTIONS[5], stateId: 5, stateName: 'Transitional', confidence: 50, timestamp: Date.now() })
@@ -175,39 +177,42 @@ export default function App() {
   }
   persist('au_observers', observers)
 
-  if (!user) {
-    return (
-      <Ctx.Provider value={ctx}>
-        <div className={`app-root ${themeClass}`}>
-          <AuthFlow onComplete={handleLogin} />
-        </div>
-      </Ctx.Provider>
-    )
-  }
-
   return (
     <Ctx.Provider value={ctx}>
       <div className={`app-root ${themeClass}`}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/map" element={<MapPage />} />
-          <Route path="/observers" element={<Observers />} />
-          <Route path="/ai" element={<AIAssistant />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/sensory-profile" element={<SensoryProfile />} />
-          <Route path="/interventions" element={<Interventions />} />
-          <Route path="/medications" element={<Medications />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={
+            user
+              ? <div className="page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: 24, textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>🧠</div>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>Signed in as <strong>{user.name}</strong></p>
+                  <button className="neon-btn primary" onClick={() => navigate('/dashboard')} style={{ marginBottom: 12, width: '100%', maxWidth: 300 }}>Continue to Dashboard →</button>
+                  <button className="neon-btn secondary" onClick={() => { setUser(null); localStorage.removeItem('au_user') }} style={{ width: '100%', maxWidth: 300 }}>Sign Out</button>
+                </div>
+              : <AuthFlow onComplete={handleLogin} />
+          } />
+          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/analytics" element={user ? <Analytics /> : <Navigate to="/login" />} />
+          <Route path="/map" element={user ? <MapPage /> : <Navigate to="/login" />} />
+          <Route path="/observers" element={user ? <Observers /> : <Navigate to="/login" />} />
+          <Route path="/ai" element={user ? <AIAssistant /> : <Navigate to="/login" />} />
+          <Route path="/settings" element={user ? <Settings /> : <Navigate to="/login" />} />
+          <Route path="/sensory-profile" element={user ? <SensoryProfile /> : <Navigate to="/login" />} />
+          <Route path="/interventions" element={user ? <Interventions /> : <Navigate to="/login" />} />
+          <Route path="/medications" element={user ? <Medications /> : <Navigate to="/login" />} />
         </Routes>
-        <nav className="bottom-nav">
-          {NAV.map(item => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'}
-              className={({ isActive }) => isActive ? 'active' : ''}>
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+        {user && (
+          <nav className="bottom-nav">
+            {NAV.map(item => (
+              <NavLink key={item.to} to={item.to} end={item.to === '/dashboard'}
+                className={({ isActive }) => isActive ? 'active' : ''}>
+                <span className="nav-icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
       </div>
     </Ctx.Provider>
   )

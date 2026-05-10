@@ -18,28 +18,52 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
+const isPlaceholder = !firebaseConfig.apiKey || firebaseConfig.apiKey === 'your_api_key_here' || firebaseConfig.apiKey.startsWith('AIza') === false
+let _fbReady = false
+
+export function isFirebaseReady() {
+  return _fbReady
+}
+
 let app: FirebaseApp
 let db: Firestore
 
 export function initFirebase() {
-  if (!app) {
-    app = initializeApp(firebaseConfig)
-    db = getFirestore(app)
+  if (_fbReady) return { app, db }
+  if (isPlaceholder) {
+    console.warn('Firebase not configured — running in demo mode. Set VITE_FIREBASE_* in .env')
+    return null
   }
-  return { app, db }
+  try {
+    if (!app) {
+      app = initializeApp(firebaseConfig)
+      db = getFirestore(app)
+    }
+    _fbReady = true
+    return { app, db }
+  } catch (e) {
+    console.warn('Firebase init failed:', e)
+    return null
+  }
+}
+
+function requireFirebase() {
+  const fb = initFirebase()
+  if (!fb) throw new Error('Firebase not configured. Add your keys to .env or run in demo mode.')
+  return fb
 }
 
 // Auth
 export function getFirebaseAuth() {
-  initFirebase()
-  return getAuth(app)
+  const fb = requireFirebase()
+  return getAuth(fb.app)
 }
 
 export async function registerUser(email: string, password: string, name: string, type: string) {
-  initFirebase()
-  const auth = getAuth(app)
+  const fb = requireFirebase()
+  const auth = getAuth(fb.app)
   const cred = await createUserWithEmailAndPassword(auth, email, password)
-  await setDoc(doc(db, 'users', cred.user.uid), {
+  await setDoc(doc(fb.db, 'users', cred.user.uid), {
     name, email, profileType: type, createdAt: Timestamp.now(),
     settings: {
       theme: 'dark', accentColor: '#00d4ff', fontSize: 'medium', units: 'metric',
@@ -52,21 +76,20 @@ export async function registerUser(email: string, password: string, name: string
 }
 
 export async function loginUser(email: string, password: string) {
-  initFirebase()
-  const auth = getAuth(app)
+  const fb = requireFirebase()
+  const auth = getAuth(fb.app)
   const cred = await signInWithEmailAndPassword(auth, email, password)
   return cred.user
 }
 
 export async function loginWithGoogle() {
-  initFirebase()
-  const auth = getAuth(app)
+  const fb = requireFirebase()
+  const auth = getAuth(fb.app)
   const provider = new GoogleAuthProvider()
   const cred = await signInWithPopup(auth, provider)
-  // Create user doc if first time
-  const userDoc = await getDoc(doc(db, 'users', cred.user.uid))
+  const userDoc = await getDoc(doc(fb.db, 'users', cred.user.uid))
   if (!userDoc.exists()) {
-    await setDoc(doc(db, 'users', cred.user.uid), {
+    await setDoc(doc(fb.db, 'users', cred.user.uid), {
       name: cred.user.displayName || 'User',
       email: cred.user.email,
       profileType: 'asd_user',
@@ -83,41 +106,43 @@ export async function loginWithGoogle() {
 }
 
 export async function logoutUser() {
-  initFirebase()
-  await signOut(getAuth(app))
+  if (!isFirebaseReady()) return
+  const fb = requireFirebase()
+  await signOut(getAuth(fb.app))
 }
 
 export function onAuthChange(cb: (user: User | null) => void) {
-  initFirebase()
-  return onAuthStateChanged(getAuth(app), cb)
+  if (!initFirebase()) { cb(null); return () => {} }
+  const fb = requireFirebase()
+  return onAuthStateChanged(getAuth(fb.app), cb)
 }
 
 // Firestore — User Profile
 export async function getUserProfile(uid: string) {
-  initFirebase()
-  const snap = await getDoc(doc(db, 'users', uid))
+  const fb = requireFirebase()
+  const snap = await getDoc(doc(fb.db, 'users', uid))
   return snap.exists() ? snap.data() : null
 }
 
 export async function saveUserSettings(uid: string, settings: any) {
-  initFirebase()
-  await setDoc(doc(db, 'users', uid), { settings }, { merge: true })
+  const fb = requireFirebase()
+  await setDoc(doc(fb.db, 'users', uid), { settings }, { merge: true })
 }
 
 export async function saveUserProfile(uid: string, data: Partial<UserProfile>) {
-  initFirebase()
-  await setDoc(doc(db, 'users', uid), data, { merge: true })
+  const fb = requireFirebase()
+  await setDoc(doc(fb.db, 'users', uid), data, { merge: true })
 }
 
 // Firestore — Events
 export async function saveEvent(uid: string, event: EventLog) {
-  initFirebase()
-  await addDoc(collection(db, 'users', uid, 'events'), event)
+  const fb = requireFirebase()
+  await addDoc(collection(fb.db, 'users', uid, 'events'), event)
 }
 
 export function subscribeEvents(uid: string, cb: (events: EventLog[]) => void) {
-  initFirebase()
-  const q = query(collection(db, 'users', uid, 'events'), orderBy('timestamp', 'desc'))
+  const fb = requireFirebase()
+  const q = query(collection(fb.db, 'users', uid, 'events'), orderBy('timestamp', 'desc'))
   return onSnapshot(q, (snap) => {
     cb(snap.docs.map(d => d.data() as EventLog))
   })
@@ -125,13 +150,13 @@ export function subscribeEvents(uid: string, cb: (events: EventLog[]) => void) {
 
 // Firestore — Devices
 export async function saveDevice(uid: string, device: BLEDevice) {
-  initFirebase()
-  await setDoc(doc(db, 'users', uid, 'devices', device.id), device)
+  const fb = requireFirebase()
+  await setDoc(doc(fb.db, 'users', uid, 'devices', device.id), device)
 }
 
 export async function getDevices(uid: string) {
-  initFirebase()
-  const snap = await getDoc(doc(db, 'users', uid, 'devices', 'paired'))
+  const fb = requireFirebase()
+  const snap = await getDoc(doc(fb.db, 'users', uid, 'devices', 'paired'))
   return snap.exists() ? snap.data() : { devices: [] }
 }
 
